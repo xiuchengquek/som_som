@@ -1,0 +1,87 @@
+---
+title: "main"
+author: "Quek Xiu Cheng"
+date: "18 November 2015"
+output: 
+  html_document:
+    toc : true
+---
+
+This is a document to highlight the steps involved conducting self organizing map analysis with data from the MRTA Projects.
+
+Data are restricted acces and are not included in the repository 
+
+For more infomration please email : x.quek@garvan.org.au
+
+
+# Dependencies
+
+
+```{r}
+library(edgeR)
+library(pheatmap)
+library(cluster)
+library(R6)
+library(reshape2)
+library(plyr)
+library(kohonen)
+library(ggplot2)
+source('src/somHelper.R')
+
+```
+
+# Step 1 - Read data ( FPKM Value )
+
+```{r, echo=FALSE}
+fpkm <- read.table('data/rsem_gencode/EMP1_resultsGenesFPKM.txt')
+
+classifications <- read.table('data/classification.tsv')
+
+```
+
+# Step 2 - Working on Snail / on / off model only
+
+
+```{r}
+
+
+snail_model_fpkm <- fpkm[classifications$snailModel == 'S']
+
+snail_model_fpkm <- snail_model_fpkm[rowSums(snail_model_fpkm > 1 ) >= ncol(snail_model_fpkm),]
+snail_model_fpkm_list <- list()
+
+snail_model_fpkm_list$fpkm <- snail_model_fpkm
+snail_model_fpkm_list$fpkm_scaled <- apply(snail_model_fpkm, 2, scale, center = T)
+snail_model_fpkm_list$fpkm_scaled  <- as.data.frame(snail_model_fpkm_list$fpkm_scaled,row.names = rownames(snail_model_fpkm))
+
+snail_model_fpkm_list$fpkm_log10 <- log10(snail_model_fpkm + 0.25 )
+snail_model_fpkm_list$fpkm_scaled_log10 <- apply(snail_model_fpkm_list$fpkm_log10 , 2, scale, center = T)
+snail_model_fpkm_list$fpkm_scaled_log10  <- as.data.frame(snail_model_fpkm_list$fpkm_scaled_log10,row.names = rownames(snail_model_fpkm))
+
+
+
+snail_model_fpkm_som_list <- lapply(snail_model_fpkm_list, function(x)
+                                { set.seed(7);  
+                                  som(data=as.matrix(x), grid = somgrid(8,8, "rectangular"), keep.data =T)
+                                }) 
+snail_model_fpkm_somObj_list <- lapply(snail_model_fpkm_som_list, function(x){
+                                somHelper$new(x)
+                        })
+
+```
+
+
+```{r, fig.width=20, fig.height=20}
+
+fpkm_som_plots <- somPlotHelper$new(snail_model_fpkm_somObj_list)
+
+fpkm_som_plots$plotAllCluster()
+
+
+
+
+```
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

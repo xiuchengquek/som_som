@@ -1,0 +1,50 @@
+---
+title: "Generation of Classification"
+author: "Quek Xiu Cheng"
+date: "18 November 2015"
+output: 
+  html_document : 
+    toc : true
+---
+
+## Depenedencies 
+
+
+None known
+
+## Step 1 : Read Data
+
+```{r}
+
+data <- read.table('data/rsem_gencode/EMP1_resultsGenesCount.txt')
+samples <- colnames(data)
+snailModel <- do.call(c, lapply(strsplit(samples, '\\.'), function(x) { x[2]}))
+timeLabel <- do.call(c, lapply(strsplit(samples, '\\.'), function(x) { x[3]}))
+relativeTimePointExperiment <- gsub(x= timeLabel,pattern=  "[A-Z]+" ,replacement = '', perl=T)
+relativeTimePointExperiment <- as.factor(as.integer(relativeTimePointExperiment))
+levels(relativeTimePointExperiment)<- seq_along(levels(relativeTimePointExperiment))
+snailStatus <- gsub(x= timeLabel,pattern=  "[0-9]+" ,replacement = '', perl=T)
+snailStatus <- as.factor(snailStatus)
+levels(snailStatus)<- c("none", "induced", "repressed")
+
+
+df <- data.frame(samples = samples, timeLabel = timeLabel, relativeTimePointExperiment = relativeTimePointExperiment,  snailStatus=snailStatus)
+
+df
+
+
+write.table(df, file='classification.tsv')
+
+
+
+
+
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
